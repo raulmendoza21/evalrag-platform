@@ -1,6 +1,7 @@
-"""Chunk persistence."""
+"""Chunk persistence + retrieval-side queries."""
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 import asyncpg
@@ -34,3 +35,50 @@ async def bulk_insert_chunks(
     )
     rows_sorted = sorted(rows, key=lambda r: r["chunk_index"])
     return [r["id"] for r in rows_sorted]
+
+
+async def search_sparse(
+    conn: asyncpg.Connection,
+    tenant_id: UUID,
+    query: str,
+    limit: int,
+) -> list[tuple[UUID, float]]:
+    """BM25-style ranking via Postgres ts_rank_cd on the GIN index."""
+    if not query.strip() or limit <= 0:
+        return []
+    rows = await conn.fetch(
+        """
+        SELECT id,
+               ts_rank_cd(to_tsvector('simple', text), q) AS score
+          FROM chunks, plainto_tsquery('simple', $1) AS q
+         WHERE tenant_id = $2
+           AND to_tsvector('simple', text) @@ q
+         ORDER BY score DESC
+         LIMIT $3
+        """,
+        query,
+        tenant_id,
+        limit,
+    )
+    return [(r["id"], float(r["score"])) for r in rows]
+
+
+async def get_chunks_by_ids(
+    conn: asyncpg.Connection,
+    tenant_id: UUID,
+    chunk_ids: list[UUID],
+) -> dict[UUID, dict[str, Any]]:
+    """Hydrate chunk rows by id, filtered by tenant. Returns {chunk_id: row}."""
+    if not chunk_ids:
+        return {}
+    rows = await conn.fetch(
+        """
+        SELECT id, document_id, tenant_id, page, chunk_index, text, token_count
+          FROM chunks
+         WHERE tenant_id = $1
+           AND id = ANY($2::uuid[])
+        """,
+        tenant_id,
+        chunk_ids,
+    )
+    return {r["id"]: dict(r) for r in rows}

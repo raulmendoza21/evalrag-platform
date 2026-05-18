@@ -7,10 +7,10 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import routes_documents, routes_health
+from app.api import routes_chat, routes_documents, routes_health
 from app.config import get_settings
 from app.core.logging import configure_logging, get_logger
-from app.infrastructure import embedding_client, postgres, qdrant
+from app.infrastructure import embedding_client, llm_client, postgres, qdrant
 
 
 @asynccontextmanager
@@ -24,6 +24,7 @@ async def lifespan(app: FastAPI):
     await postgres.init_pool(settings)
     await qdrant.init_qdrant(settings)
     embedding_client.init_embedding_client(settings)
+    llm_client.init_llm_client(settings)
     log.info("startup.complete", env=settings.app_env)
 
     try:
@@ -47,6 +48,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(routes_health.router)
+    app.include_router(routes_chat.router)
     app.include_router(routes_documents.router)
     return app
 
