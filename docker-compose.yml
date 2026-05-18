@@ -4,12 +4,15 @@ services:
   api:
     build: ./backend
     env_file: .env
+    environment:
+      STORAGE_DIR: /storage
     ports:
       - "${APP_PORT:-8000}:8000"
     depends_on: [postgres, qdrant, redis]
     volumes:
       - ./backend:/app
       - ./datasets:/datasets:ro
+      - storage:/storage
 
   frontend:
     build: ./frontend
@@ -50,3 +53,4 @@ services:
 volumes:
   pgdata:
   qdrant_data:
+  storage:
