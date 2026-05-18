@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 
 from app.config import Settings, get_settings
 from app.core.exceptions import IngestionError
@@ -74,12 +74,17 @@ async def get_document(
     return DocumentOut.model_validate(doc)
 
 
-@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{document_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+)
 async def delete_document(
     document_id: UUID,
     settings: Settings = Depends(get_settings),
     tenant_id: UUID = Depends(get_tenant_id),
-) -> None:
+) -> Response:
     ok = await document_service.delete_for_tenant(settings, tenant_id, document_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Document not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

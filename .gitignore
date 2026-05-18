@@ -35,3 +35,6 @@ docs/evaluation_report.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Local AI agent context (private notes for Copilot continuity)
+agent/
