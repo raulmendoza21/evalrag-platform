@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ChatPanel from "./components/ChatPanel.jsx";
 import DocumentList from "./components/DocumentList.jsx";
+import EvalPanel from "./components/EvalPanel.jsx";
 import UploadPanel from "./components/UploadPanel.jsx";
 
 export default function App() {
@@ -12,7 +13,7 @@ export default function App() {
       <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">EvalRAG</h1>
         <p className="text-sm text-slate-500">
-          Hybrid retrieval (dense + BM25 · RRF fusion) · grounded answers with mandatory citations
+          Hybrid retrieval (dense + BM25 · RRF fusion) · grounded answers with mandatory citations · evaluation harness
         </p>
       </header>
 
@@ -21,8 +22,9 @@ export default function App() {
           <UploadPanel onUploaded={bump} />
           <DocumentList refreshKey={refreshKey} onChanged={bump} />
         </div>
-        <div className="md:col-span-2">
+        <div className="space-y-6 md:col-span-2">
           <ChatPanel />
+          <EvalPanel />
         </div>
       </div>
     </div>

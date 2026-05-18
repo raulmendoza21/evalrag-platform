@@ -31,3 +31,13 @@ export async function chat(query, topK = 5) {
   const res = await api.post("/chat", { query, top_k: topK });
   return res.data;
 }
+
+export async function runEval({ dataset = "sample", k = 5, judge = true } = {}) {
+  const res = await api.post("/eval/run", { dataset, k, judge }, { timeout: 600000 });
+  return res.data;
+}
+
+export async function listEvalRuns() {
+  const res = await api.get("/eval/runs");
+  return res.data;
+}
